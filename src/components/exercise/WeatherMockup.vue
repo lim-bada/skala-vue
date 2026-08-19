@@ -9,16 +9,14 @@ const weatherList = ref([
   { id: 'city_05', name: '광주', temp: 22, status: '흐림' },
 ])
 const searchedCity = ref('')
-
 const selectedMessage = ref('도시를 선택해 주세요.')
-
 const selectCity = (cityName) => {
   selectedMessage.value = `${cityName}이 선택되었습니다.`
 }
-
 const showDetail = (cityName, status) => {
   window.alert(`${cityName}의 현재 날씨는 [${status}] 상태입니다.`)
 }
+const temperatureUnit = ref('celsius')
 </script>
 
 <template>
@@ -34,6 +32,13 @@ const showDetail = (cityName, status) => {
           placeholder="검색할 도시 이름 입력"
         />
         <p>검색 중인 도시: {{ searchedCity }}</p>
+        <label>
+          온도 단위:
+          <select v-model="temperatureUnit">
+            <option value="celsius">섭씨(°C)</option>
+            <option value="fahrenheit">화씨(°F)</option>
+          </select>
+        </label>
       </div>
     </section>
     <section class="list-box">
@@ -42,12 +47,14 @@ const showDetail = (cityName, status) => {
         <p class="status-bar">{{ selectedMessage }}</p>
         <div
           v-for="weather in weatherList"
+          v-show="weather.name.includes(searchedCity)"
           :key="weather.id"
           class="weather-card"
           @click="selectCity(weather.name)"
         >
           <h3>{{ weather.name }}</h3>
-          <p>온도: {{ weather.temp }}°C</p>
+          <p v-if="temperatureUnit === 'celsius'">온도: {{ weather.temp }}°C</p>
+          <p v-else>온도: {{ Math.round((weather.temp * 9) / 5 + 32) }}°F</p>
           <p>날씨 상태: {{ weather.status }}</p>
           <p v-if="weather.temp >= 28" style="color: red">더움 (28도 이상)</p>
           <p v-else-if="weather.temp >= 23" style="color: green">선선함 (23도 이상 28도 미만)</p>
