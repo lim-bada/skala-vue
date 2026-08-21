@@ -1,6 +1,5 @@
 <script setup>
-import { ref } from 'vue'
-
+import { ref, computed, watch, watchEffect } from 'vue'
 const weatherList = ref([
   {
     id: 'city_01',
@@ -39,19 +38,68 @@ const weatherList = ref([
   },
 ])
 const searchQuery = ref('')
-const selectedCityInfo = ref('도시를 선택해 주세요.')
-const selectCity = (cityName) => {
-  selectedCityInfo.value = `${cityName}이 선택되었습니다.`
+const selectedCityInfo = ref('카드를 클릭하거나 검색해 보세요.')
+const selectedDeliveryCity = ref(null)
+const selectCity = (weather) => {
+  selectedCityInfo.value = `${weather.name}이 선택되었습니다.`
+  selectedDeliveryCity.value = weather
 }
 const showDetail = (cityName, status) => {
   window.alert(`${cityName}의 현재 날씨는 [${status}] 상태입니다.`)
 }
 const temperatureUnit = ref('celsius')
+const expectedDeliveryTime = computed(() => {
+  const weather = selectedDeliveryCity.value
+
+  if (!weather) {
+    return 0
+  }
+  if (weather.status === '비') {
+    return weather.delivery.baseTime + 15
+  }
+  if (weather.temp >= 28) {
+    return weather.delivery.baseTime + 5
+  }
+  return weather.delivery.baseTime
+})
+
+// computed
+const filteredWeatherList = computed(() => {
+  const query = searchQuery.value.trim()
+
+  if (!query) {
+    return weatherList.value
+  }
+  return weatherList.value.filter((item) => item.name.includes(query))
+})
+
+// watch
+watch(selectedCityInfo, (newInfo) => {
+  console.log(`[watch 감지] 상태 바 문구가 업데이트되었습니다 -> "${newInfo}"`)
+})
+
+watch(selectedDeliveryCity, (newCity, oldCity) => {
+  if (!newCity) {
+    return
+  }
+  const oldCityName = oldCity ? oldCity.name : '선택 없음'
+
+  console.log(
+    `[배달 도시 변경] ${oldCityName} → ${newCity.name}, 예상 배달 시간: ${expectedDeliveryTime.value}분`,
+  )
+})
+
+// watchEffect
+watchEffect(() => {
+  console.log(
+    `[watchEffect 자동 호출] 현재 검색어 '${searchQuery.value}'에 매칭되는 API 데이터를 필터링합니다.`,
+  )
+})
 </script>
 
 <template>
-  <div class="weather-mockup">
-    <h2>과제 1: 날씨 (Mockup)</h2>
+  <div class="dashboard-wrapper">
+    <h2>과제 2: 날씨 (컴포지션)</h2>
     <section class="search-box">
       <div class="search-city">
         <h3>도시 검색</h3>
@@ -74,11 +122,17 @@ const temperatureUnit = ref('celsius')
     <section class="list-box">
       <div class="weather-list">
         <h3>지역별 날씨 현황</h3>
+        <p
+          v-if="filteredWeatherList.length === 0"
+          style="text-align: center; color: #e74c3c; padding: 10px 0"
+        >
+          검색 결과와 일치하는 도시가 없습니다.
+        </p>
         <div
-          v-for="weather in weatherList"
+          v-for="weather in filteredWeatherList"
           :key="weather.id"
           class="weather-card"
-          @click="selectCity(weather.name)"
+          @click="selectCity(weather)"
         >
           <h3>{{ weather.name }}</h3>
           <p v-if="temperatureUnit === 'celsius'">온도: {{ weather.temp }}°C</p>
@@ -123,5 +177,14 @@ const temperatureUnit = ref('celsius')
       </div>
     </section>
     <div class="status-bar">{{ selectedCityInfo }}</div>
+    <div v-if="selectedDeliveryCity" class="delivery-info">
+      <h4>📦 선택한 주문 정보</h4>
+      <p>도시: {{ selectedDeliveryCity.name }}</p>
+      <p>메뉴: {{ selectedDeliveryCity.delivery.menu }}</p>
+      <p>
+        최종 예상 배달 시간:
+        <strong>{{ expectedDeliveryTime }}분</strong>
+      </p>
+    </div>
   </div>
 </template>
