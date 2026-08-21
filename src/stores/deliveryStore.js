@@ -1,5 +1,6 @@
 import { ref, computed } from 'vue'
 import { defineStore } from 'pinia'
+import { calculateDeliveryEstimate } from '@/utils/deliveryCalculator'
 
 export const useDeliveryStore = defineStore('delivery', () => {
   // state
@@ -7,34 +8,21 @@ export const useDeliveryStore = defineStore('delivery', () => {
 
   // getter
   const expectedDeliveryTime = computed(() => {
-    const weather = selectedDeliveryCity.value
-
-    if (!weather) {
-      return 0
-    }
-
-    const isRain =
-      weather.status === '비' || ['Rain', 'Drizzle', 'Thunderstorm'].includes(weather.condition)
-
-    if (isRain) {
-      return weather.delivery.baseTime + 15
-    }
-
-    if (weather.temp >= 28) {
-      return weather.delivery.baseTime + 5
-    }
-
-    return weather.delivery.baseTime
+    return calculateDeliveryEstimate(selectedDeliveryCity.value).totalTime
   })
 
   // action
   const selectDeliveryCity = (weather) => {
     selectedDeliveryCity.value = weather
   }
+  const clearDeliveryCity = () => {
+    selectedDeliveryCity.value = null
+  }
 
   return {
     selectedDeliveryCity,
     expectedDeliveryTime,
     selectDeliveryCity,
+    clearDeliveryCity,
   }
 })

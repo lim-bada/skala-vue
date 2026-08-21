@@ -37,6 +37,8 @@ const handleDetailClick = () => {
   <div class="weather-card" @click="handleCardClick">
     <h3>{{ weather.name }}</h3>
 
+    <el-tag v-if="weather.isExternal" type="warning" effect="plain"> 외부 검색 도시 </el-tag>
+
     <p>온도: {{ displayTemp }}{{ configStore.unitSymbol }}</p>
 
     <p>날씨 상태: {{ weather.status }}</p>
@@ -47,11 +49,22 @@ const handleDetailClick = () => {
 
     <el-tag v-else type="info"> 쌀쌀함 (23도 미만) </el-tag>
 
-    <el-button type="primary" plain size="small" class="btn-detail" @click.stop="handleDetailClick">
+    <el-button
+      v-if="!weather.isExternal"
+      type="primary"
+      plain
+      size="small"
+      class="btn-detail"
+      @click.stop="handleDetailClick"
+    >
       상세보기
     </el-button>
 
-    <DeliveryInfo :weather="weather" />
+    <DeliveryInfo v-if="weather.delivery" :weather="weather" />
+
+    <p v-else class="external-city-notice">
+      이 도시는 외부 검색으로 추가되어 배달 Mock Data가 없습니다.
+    </p>
   </div>
 </template>
 
@@ -71,5 +84,10 @@ const handleDetailClick = () => {
   position: absolute;
   top: 15px;
   right: 12px;
+}
+
+.external-city-notice {
+  margin-top: 12px;
+  color: var(--el-text-color-secondary);
 }
 </style>

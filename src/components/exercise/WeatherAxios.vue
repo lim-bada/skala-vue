@@ -12,6 +12,7 @@ import axios from 'axios'
 
 const API_KEY = import.meta.env.VITE_OPENWEATHER_API_KEY
 const WEATHER_API_URL = 'https://api.openweathermap.org/data/2.5/weather'
+const GEOCODING_API_URL = 'https://geocoding-api.open-meteo.com/v1/search'
 
 const router = useRouter()
 const deliveryStore = useDeliveryStore()
@@ -71,9 +72,20 @@ const selectedCityInfo = ref('카드를 클릭하거나 검색해 보세요.')
 const isLoading = ref(false)
 const errorMessage = ref('')
 
+// 외부 도시 검색 상태
+const locationResults = ref([])
+const searchedWeather = ref(null)
+const isCitySearchLoading = ref(false)
+const citySearchError = ref('')
+
 const selectCity = (weather) => {
   selectedCityInfo.value = `${weather.name}이 선택되었습니다.`
-  deliveryStore.selectDeliveryCity(weather)
+
+  if (weather.delivery) {
+    deliveryStore.selectDeliveryCity(weather)
+  } else {
+    deliveryStore.clearDeliveryCity()
+  }
 }
 
 const showDetail = (cityName) => {
@@ -86,6 +98,135 @@ const showDetail = (cityName) => {
 
 const handleUpdateQuery = (newQuery) => {
   searchQuery.value = newQuery
+}
+
+const handleSearchLocation = async () => {
+  const query = searchQuery.value.trim()
+
+  if (query.length < 2) {
+    citySearchError.value = '도시 이름을 두 글자 이상 입력해 주세요.'
+    return
+  }
+
+  isCitySearchLoading.value = true
+  citySearchError.value = ''
+  locationResults.value = []
+  searchedWeather.value = null
+
+  try {
+    const requestLocations = async (name) => {
+      const response = await axios.get(GEOCODING_API_URL, {
+        params: {
+          name,
+          count: 5,
+          language: 'ko',
+          countryCode: 'KR',
+          format: 'json',
+        },
+      })
+
+      return response.data.results ?? []
+    }
+
+    // 입력한 도시명으로 먼저 검색
+    let results = await requestLocations(query)
+
+    // 결과가 없고 '시'로 끝나지 않으면 '시'를 붙여 재검색
+    if (results.length === 0 && !query.endsWith('시')) {
+      results = await requestLocations(`${query}시`)
+    }
+
+    if (results.length === 0) {
+      citySearchError.value = `'${query}'에 해당하는 국내 도시를 찾지 못했습니다.`
+      return
+    }
+
+    locationResults.value = results
+  } catch (error) {
+    console.error('외부 도시 검색 실패:', error)
+    citySearchError.value = '도시 검색에 실패했습니다. 잠시 후 다시 시도해 주세요.'
+  } finally {
+    isCitySearchLoading.value = false
+  }
+}
+
+const handleSelectLocation = async (location) => {
+  if (!API_KEY) {
+    citySearchError.value = 'OpenWeather API 키가 설정되지 않았습니다.'
+    return
+  }
+
+  isCitySearchLoading.value = true
+  citySearchError.value = ''
+  searchedWeather.value = null
+
+  try {
+    const response = await axios.get(WEATHER_API_URL, {
+      params: {
+        lat: location.latitude,
+        lon: location.longitude,
+        appid: API_KEY,
+        units: 'metric',
+        lang: 'kr',
+      },
+    })
+
+    const data = response.data
+
+    searchedWeather.value = {
+      id: `external_${location.id}`,
+      name: location.name,
+      region: [location.admin1, location.admin2].filter(Boolean).join(' '),
+      country: location.country,
+      lat: location.latitude,
+      lon: location.longitude,
+      temp: Math.round(data.main.temp),
+      status: data.weather[0].description,
+      condition: data.weather[0].main,
+      humidity: data.main.humidity,
+      windSpeed: data.wind.speed,
+      icon: data.weather[0].icon,
+    }
+  } catch (error) {
+    console.error('외부 도시 날씨 조회 실패:', error)
+    citySearchError.value = '선택한 도시의 날씨를 가져오지 못했습니다.'
+  } finally {
+    isCitySearchLoading.value = false
+  }
+}
+
+const addSearchedWeather = () => {
+  const weather = searchedWeather.value
+
+  if (!weather) {
+    return
+  }
+
+  const isAlreadyAdded = weatherList.value.some((city) => {
+    const sameName = city.name === weather.name
+    const sameLocation =
+      Math.abs(city.lat - weather.lat) < 0.01 && Math.abs(city.lon - weather.lon) < 0.01
+
+    return sameName || sameLocation
+  })
+
+  if (isAlreadyAdded) {
+    citySearchError.value = `${weather.name}은 이미 대시보드에 등록된 도시입니다.`
+    return
+  }
+
+  weatherList.value.push({
+    ...weather,
+    isExternal: true,
+    delivery: null,
+  })
+
+  selectedCityInfo.value = `${weather.name}이 대시보드에 추가되었습니다.`
+
+  searchQuery.value = ''
+  locationResults.value = []
+  searchedWeather.value = null
+  citySearchError.value = ''
 }
 
 const handleFetchWeather = async () => {
@@ -150,6 +291,20 @@ const filteredWeatherList = computed(() => {
   return result
 })
 
+const searchedWeatherTemp = computed(() => {
+  if (!searchedWeather.value) {
+    return null
+  }
+
+  const temp = searchedWeather.value.temp
+
+  if (configStore.unit === 'fahrenheit') {
+    return Math.round((temp * 9) / 5 + 32)
+  }
+
+  return temp
+})
+
 // watch
 watch(selectedCityInfo, (newInfo) => {
   console.log(`[watch 감지] 상태 바 문구가 업데이트되었습니다 -> "${newInfo}"`)
@@ -164,6 +319,12 @@ watch(selectedDeliveryCity, (newCity, oldCity) => {
   console.log(
     `[배달 도시 변경] ${oldCityName} → ${newCity.name}, 예상 배달 시간: ${expectedDeliveryTime.value}분`,
   )
+})
+
+watch(searchQuery, () => {
+  locationResults.value = []
+  searchedWeather.value = null
+  citySearchError.value = ''
 })
 
 // watchEffect
@@ -197,10 +358,95 @@ watchEffect(() => {
       <div class="weather-list">
         <h3>지역별 날씨 현황</h3>
         <el-empty
-          v-if="filteredWeatherList.length === 0"
-          description="검색 결과와 일치하는 도시가 없습니다."
+          v-if="
+            filteredWeatherList.length === 0 && locationResults.length === 0 && !searchedWeather
+          "
+          description="등록된 도시 중 검색 결과가 없습니다."
           :image-size="80"
+        >
+          <el-button type="primary" :loading="isCitySearchLoading" @click="handleSearchLocation">
+            ‘{{ searchQuery.trim() }}’ 실제 도시 검색
+          </el-button>
+        </el-empty>
+
+        <el-alert
+          v-if="citySearchError"
+          :title="citySearchError"
+          type="error"
+          show-icon
+          :closable="false"
         />
+
+        <div v-if="locationResults.length > 0" class="location-results">
+          <h4>검색된 지역을 선택해 주세요.</h4>
+
+          <el-button
+            v-for="location in locationResults"
+            :key="location.id"
+            class="location-button"
+            type="primary"
+            plain
+            :disabled="isCitySearchLoading"
+            @click="handleSelectLocation(location)"
+          >
+            {{ location.name }}
+            <span v-if="location.admin1"> / {{ location.admin1 }}</span>
+            <span v-if="location.admin2"> / {{ location.admin2 }}</span>
+          </el-button>
+        </div>
+        <el-card v-if="searchedWeather" class="searched-weather-card" shadow="never">
+          <template #header>
+            <div class="searched-weather-header">
+              <div>
+                <h3>{{ searchedWeather.name }}</h3>
+                <p>
+                  <span v-if="searchedWeather.region">
+                    {{ searchedWeather.region }}
+                  </span>
+                  <span v-if="searchedWeather.country">
+                    {{ searchedWeather.country }}
+                  </span>
+                </p>
+              </div>
+
+              <img
+                v-if="searchedWeather.icon"
+                class="searched-weather-icon"
+                :src="`https://openweathermap.org/img/wn/${searchedWeather.icon}@2x.png`"
+                :alt="`${searchedWeather.status} 날씨 아이콘`"
+              />
+            </div>
+          </template>
+
+          <el-descriptions :column="2" border>
+            <el-descriptions-item label="현재 온도">
+              {{ searchedWeatherTemp }}{{ configStore.unitSymbol }}
+            </el-descriptions-item>
+
+            <el-descriptions-item label="날씨 상태">
+              {{ searchedWeather.status }}
+            </el-descriptions-item>
+
+            <el-descriptions-item label="습도">
+              {{ searchedWeather.humidity }}%
+            </el-descriptions-item>
+
+            <el-descriptions-item label="풍속">
+              {{ searchedWeather.windSpeed }}m/s
+            </el-descriptions-item>
+          </el-descriptions>
+
+          <el-alert
+            class="external-weather-notice"
+            title="외부 검색 도시는 실제 기상 정보만 제공하며 배달 Mock Data에는 포함되지 않습니다."
+            type="info"
+            show-icon
+            :closable="false"
+          />
+          <div class="external-weather-actions">
+            <el-button type="success" @click="addSearchedWeather"> 대시보드에 추가 </el-button>
+          </div>
+        </el-card>
         <WeatherCard
           v-for="weather in filteredWeatherList"
           :key="weather.id"
@@ -250,5 +496,51 @@ watchEffect(() => {
 :global(.dark) .status-bar {
   background-color: #1e3a2a;
   color: #9be7ad;
+}
+
+.location-results {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 12px 0;
+}
+
+.location-results h4 {
+  margin-bottom: 4px;
+}
+
+.location-results .location-button {
+  width: 100%;
+  margin-left: 0;
+  justify-content: flex-start;
+}
+
+.searched-weather-card {
+  margin: 12px 0;
+}
+
+.searched-weather-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.searched-weather-header p {
+  color: var(--el-text-color-secondary);
+}
+
+.searched-weather-icon {
+  width: 64px;
+  height: 64px;
+}
+
+.external-weather-notice {
+  margin-top: 12px;
+}
+
+.external-weather-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 12px;
 }
 </style>

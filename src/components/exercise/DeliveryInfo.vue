@@ -1,10 +1,15 @@
 <script setup>
-defineProps({
+import { computed } from 'vue'
+import { calculateDeliveryEstimate } from '@/utils/deliveryCalculator'
+
+const props = defineProps({
   weather: {
     type: Object,
     required: true,
   },
 })
+
+const deliveryEstimate = computed(() => calculateDeliveryEstimate(props.weather))
 </script>
 
 <template>
@@ -13,30 +18,22 @@ defineProps({
 
     <p>주문 메뉴: {{ weather.delivery.menu }}</p>
     <p>배달 거리: {{ weather.delivery.distance }}km</p>
-    <p>기본 배달 시간: {{ weather.delivery.baseTime }}분</p>
+    <p>조리·배차 기본 시간: {{ deliveryEstimate.baseTime }}분</p>
+    <p>예상 이동 시간: {{ deliveryEstimate.travelTime }}분</p>
 
-    <p
-      v-if="
-        weather.status === '비' || ['Rain', 'Drizzle', 'Thunderstorm'].includes(weather.condition)
-      "
-      class="delivery-danger"
-    >
-      예상 배달 시간: 약 {{ weather.delivery.baseTime + 15 }}분
-      <br />
-      ☔ 비로 인해 배달이 지연될 수 있습니다.
+    <p v-if="deliveryEstimate.weatherDelay > 0" class="delivery-delay">
+      현재 날씨 지연: +{{ deliveryEstimate.weatherDelay }}분
     </p>
 
-    <p v-else-if="weather.temp >= 28" class="delivery-warning">
-      예상 배달 시간: 약 {{ weather.delivery.baseTime + 5 }}분
-      <br />
-      🥵 더운 날씨로 인해 조금 지연될 수 있습니다.
+    <p v-if="deliveryEstimate.windDelay > 0" class="delivery-delay">
+      강풍 지연: +{{ deliveryEstimate.windDelay }}분
     </p>
 
-    <p v-else class="delivery-normal">
-      예상 배달 시간: 약 {{ weather.delivery.baseTime }}분
-      <br />
-      ✅ 정상적으로 배달될 예정입니다.
+    <p class="delivery-total">
+      최종 예상 배달 시간: 약 {{ deliveryEstimate.totalTime }}분
     </p>
+
+    <p class="delivery-basis">평균 이동 속도 시속 20km 기준 Mock 예상치입니다.</p>
   </div>
 </template>
 
@@ -49,18 +46,19 @@ defineProps({
   border-radius: 6px;
 }
 
-.delivery-danger {
-  color: #e74c3c;
-  font-weight: bold;
-}
-
-.delivery-warning {
+.delivery-delay {
   color: #e67e22;
   font-weight: bold;
 }
 
-.delivery-normal {
-  color: #27ae60;
+.delivery-total {
+  margin-top: 8px;
+  color: var(--el-color-primary);
   font-weight: bold;
+}
+
+.delivery-basis {
+  color: var(--el-text-color-secondary);
+  font-size: 12px;
 }
 </style>
