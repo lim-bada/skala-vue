@@ -8,8 +8,8 @@ defineProps({
 
 const emit = defineEmits(['update-query'])
 
-const handleInput = (event) => {
-  emit('update-query', event.target.value)
+const handleInput = (value) => {
+  emit('update-query', value)
 }
 </script>
 
@@ -17,11 +17,12 @@ const handleInput = (event) => {
   <div class="search-city">
     <h3>도시 검색</h3>
 
-    <input
-      type="text"
-      :value="searchQuery"
-      @input="handleInput"
+    <el-input
+      class="city-search-input"
+      :model-value="searchQuery"
+      @update:model-value="handleInput"
       placeholder="검색할 도시 이름 입력"
+      clearable
     />
 
     <p>검색 중인 도시: {{ searchQuery }}</p>
@@ -29,12 +30,7 @@ const handleInput = (event) => {
 </template>
 
 <style scoped>
-input {
-  padding: 8px;
-  width: 90%;
-  font-size: 14px;
-  background-color: var(--color-background);
-  border-color: var(--color-border);
-  color: var(--color-text);
+.city-search-input {
+  width: 100%;
 }
 </style>

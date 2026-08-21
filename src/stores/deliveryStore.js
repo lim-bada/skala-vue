@@ -13,7 +13,10 @@ export const useDeliveryStore = defineStore('delivery', () => {
       return 0
     }
 
-    if (weather.status === '비') {
+    const isRain =
+      weather.status === '비' || ['Rain', 'Drizzle', 'Thunderstorm'].includes(weather.condition)
+
+    if (isRain) {
       return weather.delivery.baseTime + 15
     }
 

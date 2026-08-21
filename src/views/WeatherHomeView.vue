@@ -1,7 +1,7 @@
 <script setup>
-import WeatherRouter from '@/components/exercise/WeatherRouter.vue'
+import WeatherAxios from '@/components/exercise/WeatherAxios.vue'
 </script>
 
 <template>
-  <WeatherRouter />
+  <WeatherAxios />
 </template>

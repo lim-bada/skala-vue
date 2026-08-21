@@ -15,7 +15,12 @@ defineProps({
     <p>배달 거리: {{ weather.delivery.distance }}km</p>
     <p>기본 배달 시간: {{ weather.delivery.baseTime }}분</p>
 
-    <p v-if="weather.status === '비'" class="delivery-danger">
+    <p
+      v-if="
+        weather.status === '비' || ['Rain', 'Drizzle', 'Thunderstorm'].includes(weather.condition)
+      "
+      class="delivery-danger"
+    >
       예상 배달 시간: 약 {{ weather.delivery.baseTime + 15 }}분
       <br />
       ☔ 비로 인해 배달이 지연될 수 있습니다.

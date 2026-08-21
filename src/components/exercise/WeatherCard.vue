@@ -41,11 +41,15 @@ const handleDetailClick = () => {
 
     <p>날씨 상태: {{ weather.status }}</p>
 
-    <p v-if="weather.temp >= 28" style="color: red">더움 (28도 이상)</p>
-    <p v-else-if="weather.temp >= 23" style="color: green">선선함 (23도 이상 28도 미만)</p>
-    <p v-else style="color: blue">쌀쌀함 (23도 미만)</p>
+    <el-tag v-if="weather.temp >= 28" type="danger"> 더움 (28도 이상) </el-tag>
 
-    <button type="button" class="btn-detail" @click.stop="handleDetailClick">상세보기</button>
+    <el-tag v-else-if="weather.temp >= 23" type="success"> 선선함 (23도 이상 28도 미만) </el-tag>
+
+    <el-tag v-else type="info"> 쌀쌀함 (23도 미만) </el-tag>
+
+    <el-button type="primary" plain size="small" class="btn-detail" @click.stop="handleDetailClick">
+      상세보기
+    </el-button>
 
     <DeliveryInfo :weather="weather" />
   </div>
@@ -67,10 +71,5 @@ const handleDetailClick = () => {
   position: absolute;
   top: 15px;
   right: 12px;
-  padding: 6px 10px;
-  background-color: var(--color-background);
-  border-color: var(--color-border);
-  color: var(--color-text);
-  cursor: pointer;
 }
 </style>

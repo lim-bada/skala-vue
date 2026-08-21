@@ -49,11 +49,19 @@ h1 {
   display: flex;
   justify-content: center;
   align-items: center;
-  background-color: #ffffff;
+  flex-wrap: wrap;
+  gap: 8px;
+
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto 20px;
+
+  background-color: var(--color-background-soft);
+  border: 1px solid var(--color-border);
+  color: var(--color-text);
   padding: 15px;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-  margin-bottom: 20px;
 }
 .nav-item {
   text-decoration: none;
@@ -79,7 +87,8 @@ h1 {
 
 /* 과제페이지 스타일 - Component 분리 후 각 페이지별로 이동 */
 .dashboard-wrapper {
-  width: 600px;
+  width: 100%;
+  max-width: 800px;
   margin: 0 auto;
 }
 .search-box,
@@ -143,11 +152,9 @@ button {
   color: var(--color-text);
 }
 
-@media (prefers-color-scheme: dark) {
-  .status-bar {
-    background-color: #1e3a2a;
-    color: #9be7ad;
-  }
+.dark .status-bar {
+  background-color: #1e3a2a;
+  color: #9be7ad;
 }
 
 .delivery-info {

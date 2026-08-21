@@ -1,10 +1,11 @@
 <script setup>
 import UnitToggler from '@/components/exercise/UnitToggler.vue'
+import ThemeToggler from '@/components/exercise/ThemeToggler.vue'
 </script>
 
 <template>
-  <div id="app">
-    <h2 class="dashboard-title">과제 2: 날씨 (라우터 적용)</h2>
+  <div class="app-shell">
+    <h2 class="dashboard-title">과제: 날씨</h2>
 
     <nav class="navigation-bar">
       <RouterLink to="/">날씨 대시보드</RouterLink>
@@ -12,6 +13,7 @@ import UnitToggler from '@/components/exercise/UnitToggler.vue'
       <RouterLink to="/delivery-guide">배달 안내</RouterLink>
 
       <UnitToggler />
+      <ThemeToggler />
     </nav>
 
     <main class="main-content">
@@ -25,7 +27,13 @@ import UnitToggler from '@/components/exercise/UnitToggler.vue'
 @import '@/assets/exercise.css';
 
 .dashboard-title {
-  width: 600px;
+  width: 100%;
+  max-width: 800px;
   margin: 0 auto 16px;
+}
+.main-content {
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
 }
 </style>
