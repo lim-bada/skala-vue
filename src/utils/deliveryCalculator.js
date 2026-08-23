@@ -1,4 +1,3 @@
-const AVERAGE_SPEED_KMH = 20
 const ROUND_UNIT_MINUTES = 5
 
 const calculateWeatherDelay = (weather) => {
@@ -19,8 +18,8 @@ const calculateWeatherDelay = (weather) => {
   return 0
 }
 
-export const calculateDeliveryEstimate = (weather) => {
-  if (!weather?.delivery) {
+export const calculateDeliveryEstimate = (weather, order = weather?.delivery) => {
+  if (!weather || !order) {
     return {
       baseTime: 0,
       travelTime: 0,
@@ -30,11 +29,11 @@ export const calculateDeliveryEstimate = (weather) => {
     }
   }
 
-  const baseTime = Number(weather.delivery.baseTime) || 0
-  const distance = Number(weather.delivery.distance) || 0
+  const baseTime = Number(order.baseTime) || 0
+  const routeDurationMinutes = Number(order.routeDurationMinutes) || 0
   const windSpeed = Number(weather.windSpeed) || 0
 
-  const travelTime = Math.ceil((distance / AVERAGE_SPEED_KMH) * 60)
+  const travelTime = Math.ceil(routeDurationMinutes)
   const weatherDelay = calculateWeatherDelay(weather)
   const windDelay = windSpeed >= 10 ? 5 : 0
   const rawTotalTime = baseTime + travelTime + weatherDelay + windDelay
@@ -46,5 +45,6 @@ export const calculateDeliveryEstimate = (weather) => {
     weatherDelay,
     windDelay,
     totalTime,
+    usesRouteApi: routeDurationMinutes > 0,
   }
 }

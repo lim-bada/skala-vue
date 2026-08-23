@@ -1,7 +1,7 @@
 <script setup>
-import WeatherAxios from '@/components/exercise/WeatherAxios.vue'
+import WeatherDelivery from '@/components/exercise/WeatherDelivery.vue'
 </script>
 
 <template>
-  <WeatherAxios />
+  <WeatherDelivery />
 </template>

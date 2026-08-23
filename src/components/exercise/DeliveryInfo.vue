@@ -7,19 +7,24 @@ const props = defineProps({
     type: Object,
     required: true,
   },
+  order: {
+    type: Object,
+    default: null,
+  },
 })
 
-const deliveryEstimate = computed(() => calculateDeliveryEstimate(props.weather))
+const orderInfo = computed(() => props.order ?? props.weather.delivery)
+const deliveryEstimate = computed(() => calculateDeliveryEstimate(props.weather, orderInfo.value))
 </script>
 
 <template>
   <div class="delivery-info">
     <h4>🛵 배달 예상 정보</h4>
 
-    <p>주문 메뉴: {{ weather.delivery.menu }}</p>
-    <p>배달 거리: {{ weather.delivery.distance }}km</p>
+    <p>주문 메뉴: {{ orderInfo.menu }}</p>
+    <p>도로 기준 배달 거리: {{ orderInfo.distance }}km</p>
     <p>조리·배차 기본 시간: {{ deliveryEstimate.baseTime }}분</p>
-    <p>예상 이동 시간: {{ deliveryEstimate.travelTime }}분</p>
+    <p>도로 기준 예상 이동 시간: {{ deliveryEstimate.travelTime }}분</p>
 
     <p v-if="deliveryEstimate.weatherDelay > 0" class="delivery-delay">
       현재 날씨 지연: +{{ deliveryEstimate.weatherDelay }}분
@@ -29,11 +34,14 @@ const deliveryEstimate = computed(() => calculateDeliveryEstimate(props.weather)
       강풍 지연: +{{ deliveryEstimate.windDelay }}분
     </p>
 
-    <p class="delivery-total">
-      최종 예상 배달 시간: 약 {{ deliveryEstimate.totalTime }}분
-    </p>
+    <p class="delivery-total">최종 예상 배달 시간: 약 {{ deliveryEstimate.totalTime }}분</p>
 
-    <p class="delivery-basis">평균 이동 속도 시속 20km 기준 Mock 예상치입니다.</p>
+    <p v-if="deliveryEstimate.usesRouteApi" class="delivery-basis">
+      openrouteservice의 도로 경로에 현재 날씨 지연을 더한 예상치입니다.
+    </p>
+    <p v-else class="delivery-basis">
+      도로 경로 정보가 없어 이동 시간은 포함되지 않은 Mock 예상치입니다.
+    </p>
   </div>
 </template>
 

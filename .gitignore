@@ -12,6 +12,9 @@ node_modules
 dist
 dist-ssr
 coverage
+# Local environment variables containing secrets
+.env.local
+.env.*.local
 *.local
 
 # Editor directories and files

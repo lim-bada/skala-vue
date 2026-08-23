@@ -2,13 +2,18 @@
 import { ref } from 'vue'
 import axios from 'axios'
 
+const API_KEY = import.meta.env.VITE_OPENWEATHER_API_KEY
 const weatherData = ref(null)
 const isLoading = ref(false)
 
 const handleFetchWeather = async () => {
+  if (!API_KEY) {
+    alert('OpenWeather API 키가 설정되지 않았습니다.')
+    return
+  }
+
   isLoading.value = true
 
-  const API_KEY = '8964edc63b366d27b5b728b7976570b7'
   const URL = `https://api.openweathermap.org/data/2.5/weather?lat=35.158582&lon=126.804975&appid=${API_KEY}&units=metric&lang=kr`
 
   try {

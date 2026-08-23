@@ -1,14 +1,16 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useConfigStore } from '@/stores/configStore'
+import { useWeatherStore } from '@/stores/weatherStore'
 import axios from 'axios'
 
 const API_KEY = import.meta.env.VITE_OPENWEATHER_API_KEY
 const AIR_POLLUTION_API_URL = 'https://api.openweathermap.org/data/2.5/air_pollution'
 const route = useRoute()
 const configStore = useConfigStore()
-const selectedWeather = ref(null)
+const weatherStore = useWeatherStore()
+const selectedWeather = computed(() => weatherStore.getWeatherById(route.params.cityId))
 const airPollutionData = ref(null)
 const isAirLoading = ref(false)
 const airErrorMessage = ref('')
@@ -40,59 +42,6 @@ const airQualityLabel = computed(() => {
   return labels[aqi] || '정보 없음'
 })
 
-const weatherList = [
-  {
-    id: 'city_01',
-    name: '서울',
-    lat: 37.5665,
-    lon: 126.978,
-    temp: 28,
-    status: '맑음',
-    humidity: 55,
-    windSpeed: 2.1,
-  },
-  {
-    id: 'city_02',
-    name: '수원',
-    lat: 37.2636,
-    lon: 127.0286,
-    temp: 23,
-    status: '비',
-    humidity: 82,
-    windSpeed: 3.4,
-  },
-  {
-    id: 'city_03',
-    name: '부산',
-    lat: 35.1796,
-    lon: 129.0756,
-    temp: 26,
-    status: '구름',
-    humidity: 68,
-    windSpeed: 4.2,
-  },
-  {
-    id: 'city_04',
-    name: '대구',
-    lat: 35.8714,
-    lon: 128.6014,
-    temp: 30,
-    status: '맑음',
-    humidity: 48,
-    windSpeed: 1.8,
-  },
-  {
-    id: 'city_05',
-    name: '광주',
-    lat: 35.1595,
-    lon: 126.8526,
-    temp: 22,
-    status: '흐림',
-    humidity: 72,
-    windSpeed: 2.7,
-  },
-]
-
 const fetchAirPollution = async (city) => {
   if (!API_KEY) {
     airErrorMessage.value = 'OpenWeather API 키가 설정되지 않았습니다.'
@@ -120,13 +69,18 @@ const fetchAirPollution = async (city) => {
   }
 }
 
-onMounted(async () => {
-  selectedWeather.value = weatherList.find((weather) => weather.id === route.params.cityId) || null
+watch(
+  selectedWeather,
+  async (weather) => {
+    airPollutionData.value = null
+    airErrorMessage.value = ''
 
-  if (selectedWeather.value) {
-    await fetchAirPollution(selectedWeather.value)
-  }
-})
+    if (weather) {
+      await fetchAirPollution(weather)
+    }
+  },
+  { immediate: true },
+)
 </script>
 
 <template>

@@ -5,7 +5,7 @@ import ThemeToggler from '@/components/exercise/ThemeToggler.vue'
 
 <template>
   <div class="app-shell">
-    <h2 class="dashboard-title">과제: 날씨</h2>
+    <h2 class="dashboard-title">날씨 기반 배달 예상 시간 서비스</h2>
 
     <nav class="navigation-bar">
       <RouterLink to="/">날씨 대시보드</RouterLink>

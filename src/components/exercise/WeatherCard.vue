@@ -8,6 +8,10 @@ const props = defineProps({
     type: Object,
     required: true,
   },
+  showDeliveryInfo: {
+    type: Boolean,
+    default: true,
+  },
 })
 
 const configStore = useConfigStore()
@@ -49,20 +53,13 @@ const handleDetailClick = () => {
 
     <el-tag v-else type="info"> 쌀쌀함 (23도 미만) </el-tag>
 
-    <el-button
-      v-if="!weather.isExternal"
-      type="primary"
-      plain
-      size="small"
-      class="btn-detail"
-      @click.stop="handleDetailClick"
-    >
+    <el-button type="primary" plain size="small" class="btn-detail" @click.stop="handleDetailClick">
       상세보기
     </el-button>
 
-    <DeliveryInfo v-if="weather.delivery" :weather="weather" />
+    <DeliveryInfo v-if="showDeliveryInfo && weather.delivery" :weather="weather" />
 
-    <p v-else class="external-city-notice">
+    <p v-else-if="showDeliveryInfo" class="external-city-notice">
       이 도시는 외부 검색으로 추가되어 배달 Mock Data가 없습니다.
     </p>
   </div>
