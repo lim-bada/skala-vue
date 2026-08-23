@@ -12,6 +12,8 @@
 
 - OpenWeather를 이용해 현재 날씨와 도시별 대기질을 조회했습니다. ([WeatherDelivery.vue](src/components/exercise/WeatherDelivery.vue), [WeatherDetailView.vue](src/views/WeatherDetailView.vue))
 
+- 처음 화면에 표시되는 서울, 수원, 부산, 대구, 광주의 날씨는 화면 구성을 위해 직접 작성한 기본 데이터입니다. 실제 현재 날씨는 `실시간 날씨 새로고침` 버튼을 눌렀을 때 OpenWeather API를 통해 반영되므로, 배달 예상 시간을 계산하기 전에 날씨를 한 번 새로고침해야 합니다. ([weatherStore.js](src/stores/weatherStore.js), [WeatherDelivery.vue](src/components/exercise/WeatherDelivery.vue))
+
 - Open-Meteo를 이용해 대시보드에 없는 국내 지역도 검색할 수 있게 했습니다. ([WeatherDelivery.vue](src/components/exercise/WeatherDelivery.vue))
 
 - 검색한 지역을 대시보드에 추가하고 상세 화면으로 이동할 수 있게 했습니다. ([weatherStore.js](src/stores/weatherStore.js), [WeatherDetailView.vue](src/views/WeatherDetailView.vue))
